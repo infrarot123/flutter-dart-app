@@ -14,15 +14,11 @@ class Player {
   int currentScore;
   int legsWon;
   int setsWon;
-  List<int> currentThrowHistory;
-
-  // Neue Felder für Statistik
   int totalPointsScored = 0;
   int totalDartsThrown = 0;
+  List<int> currentThrowHistory;
 
   double get average {
-    // Wir brauchen eine Liste aller geworfenen Darts über das gesamte Spiel
-    // Dafür sollten wir eine 'allThrows' Liste im Player ergänzen
     if (totalDartsThrown == 0) return 0.0;
     return (totalPointsScored / totalDartsThrown) * 3;
   }
@@ -31,10 +27,8 @@ class Player {
       : currentThrowHistory = [];
 }
 
-// Checkout Lookup Table (Auszug, wie angefordert)
 class CheckoutService {
   static String? getCheckoutHint(int score) {
-    // Hier greifen wir auf die Map aus der checkouts.dart zu
     return dartFinishes[score];
   }
 }

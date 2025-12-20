@@ -143,7 +143,6 @@ class GameState extends ChangeNotifier {
         await Future.delayed(const Duration(milliseconds: 500));
 
         int timestamp = DateTime.now().millisecondsSinceEpoch;
-
         if (timestamp % 2 == 0) {
           await _safePlay('classic-andi.mp3');
         } else {
@@ -178,8 +177,7 @@ class GameState extends ChangeNotifier {
     if (p.currentThrowHistory.isNotEmpty) {
       int lastValue = p.currentThrowHistory.removeLast();
       p.currentScore += lastValue;
-    }
-    else {
+    } else {
       currentPlayerIndex = (currentPlayerIndex - 1) % players.length;
       if (currentPlayerIndex < 0) currentPlayerIndex = players.length - 1;
     }
@@ -229,9 +227,7 @@ class GameState extends ChangeNotifier {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(
-                context,
-              ).popUntil((route) => route.isFirst);
+              Navigator.of(context).popUntil((route) => route.isFirst);
             },
             child: const Text("Neues Spiel"),
           ),
@@ -240,7 +236,18 @@ class GameState extends ChangeNotifier {
     );
   }
 
-  void _handleLegWin() {
+  void _handleLegWin() async {
+
+    int timestamp = DateTime.now().millisecondsSinceEpoch;
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (activePlayer.name == "Moritz") {
+      await _safePlay('leg-win-moritz.mp3');
+    } else if (timestamp % 2 == 0) {
+      await _safePlay('leg-win-andere.mp3');
+    } else {
+      await _safePlay('leg-win-doppel.mp3');
+    }
+
     activePlayer.legsWon++;
     currentModifier = 1;
 
@@ -392,17 +399,30 @@ class GameScreen extends StatelessWidget {
                 bool isActive = idx == state.currentPlayerIndex;
 
                 return Container(
-                  width: MediaQuery.of(context).size.width / (state.players.length + 0.5),
-                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                  width:
+                      MediaQuery.of(context).size.width /
+                      (state.players.length + 0.5),
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 4,
+                  ),
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isActive ? Colors.blueGrey[700] : Colors.grey[900],
                     borderRadius: BorderRadius.circular(12),
                     border: isActive
-                        ? Border.all(color: Colors.amber, width: 2) // Rand dünner
+                        ? Border.all(
+                            color: Colors.amber,
+                            width: 2,
+                          ) // Rand dünner
                         : Border.all(color: Colors.transparent),
                     boxShadow: isActive
-                        ? [BoxShadow(color: Colors.amber.withOpacity(0.3), blurRadius: 8)]
+                        ? [
+                            BoxShadow(
+                              color: Colors.amber.withOpacity(0.3),
+                              blurRadius: 8,
+                            ),
+                          ]
                         : [],
                   ),
                   child: FittedBox(
@@ -412,7 +432,10 @@ class GameScreen extends StatelessWidget {
                       children: [
                         Text(
                           p.name,
-                          style: const TextStyle(fontSize: 18, color: Colors.white70),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Colors.white70,
+                          ),
                         ),
 
                         // Score
@@ -428,7 +451,10 @@ class GameScreen extends StatelessWidget {
 
                         // Average Label
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           margin: const EdgeInsets.only(bottom: 4),
                           decoration: BoxDecoration(
                             color: Colors.black26,
@@ -437,28 +463,41 @@ class GameScreen extends StatelessWidget {
                           child: Text(
                             "Ø: ${p.average.toStringAsFixed(2)}",
                             style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.amberAccent,
-                                fontWeight: FontWeight.bold
+                              fontSize: 12,
+                              color: Colors.amberAccent,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
 
                         // Historie
-                        Text("Letzte:", style: TextStyle(fontSize: 9, color: Colors.grey[400])),
+                        Text(
+                          "Letzte:",
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Colors.grey[400],
+                          ),
+                        ),
                         const SizedBox(height: 2),
                         Wrap(
                           spacing: 4,
                           children: p.turnHistory.reversed.take(5).map((score) {
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 1,
+                              ),
                               decoration: BoxDecoration(
                                 color: _getScoreColor(score),
                                 borderRadius: BorderRadius.circular(3),
                               ),
                               child: Text(
                                 "$score",
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
                             );
                           }).toList(),
@@ -467,7 +506,10 @@ class GameScreen extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           "Sets: ${p.setsWon} | Legs: ${p.legsWon}",
-                          style: const TextStyle(color: Colors.grey, fontSize: 10),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
                         ),
 
                         if (isActive)
@@ -475,7 +517,11 @@ class GameScreen extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 4.0),
                             child: Text(
                               "Darts: ${p.currentThrowHistory.join('  ')}",
-                              style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
+                              style: const TextStyle(
+                                color: Colors.amber,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                       ],
@@ -489,7 +535,10 @@ class GameScreen extends StatelessWidget {
           // --- CHECKOUT HINT ---
           if (activePlayer.currentScore <= 170)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 4.0,
+              ),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
@@ -500,7 +549,11 @@ class GameScreen extends StatelessWidget {
                 child: Text(
                   "Checkout: ${CheckoutService.getCheckoutHint(activePlayer.currentScore) ?? '...'}",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -516,9 +569,21 @@ class GameScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(8),
                   child: Column(
                     children: [
-                      _buildModifierBtn(context, "DOUBLE", 2, state.currentModifier == 2, Colors.orange),
+                      _buildModifierBtn(
+                        context,
+                        "DOUBLE",
+                        2,
+                        state.currentModifier == 2,
+                        Colors.orange,
+                      ),
                       const SizedBox(height: 8),
-                      _buildModifierBtn(context, "TRIPLE", 3, state.currentModifier == 3, Colors.redAccent),
+                      _buildModifierBtn(
+                        context,
+                        "TRIPLE",
+                        3,
+                        state.currentModifier == 3,
+                        Colors.redAccent,
+                      ),
                       const SizedBox(height: 8),
                       _buildUndoBtn(context),
                     ],
@@ -534,9 +599,22 @@ class GameScreen extends StatelessWidget {
                     crossAxisSpacing: 8,
                     childAspectRatio: 1.3,
                     children: [
-                      ...List.generate(20, (index) => _buildNumBtn(context, index + 1)),
-                      _buildNumBtn(context, 25, label: "BULL", color: Colors.green[700]),
-                      _buildNumBtn(context, 0, label: "0", color: Colors.blueGrey[800]),
+                      ...List.generate(
+                        20,
+                        (index) => _buildNumBtn(context, index + 1),
+                      ),
+                      _buildNumBtn(
+                        context,
+                        25,
+                        label: "BULL",
+                        color: Colors.green[700],
+                      ),
+                      _buildNumBtn(
+                        context,
+                        0,
+                        label: "0",
+                        color: Colors.blueGrey[800],
+                      ),
                     ],
                   ),
                 ),

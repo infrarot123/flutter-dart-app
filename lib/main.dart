@@ -58,8 +58,8 @@ class CheckoutService {
 class GameState extends ChangeNotifier {
   // Settings
   final int startingScore = 501;
-  final int legsPerSet = 3;
-  final int maxSets = 3;
+  final int legsPerSet = 1;
+  final int maxSets = 1;
   int legStarterIndex = 0;
 
   int currentPlayerIndex = 0;
@@ -381,7 +381,6 @@ class GameScreen extends StatelessWidget {
     var activePlayer = state.activePlayer;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Dart Counter 501")),
       body: Column(
         children: [
           // --- SCOREBOARD ---
@@ -402,7 +401,7 @@ class GameScreen extends StatelessWidget {
                     vertical: 10,
                     horizontal: 5,
                   ),
-                  padding: const EdgeInsets.all(15),
+                  padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
                     color: isActive ? Colors.blueGrey[700] : Colors.grey[900],
                     borderRadius: BorderRadius.circular(15),
@@ -424,14 +423,14 @@ class GameScreen extends StatelessWidget {
                       Text(
                         p.name,
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 18,
                           color: Colors.white70,
                         ),
                       ),
                       Text(
                         "${p.currentScore}",
                         style: const TextStyle(
-                          fontSize: 70,
+                          fontSize: 40,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -444,21 +443,21 @@ class GameScreen extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black26,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           "Ø: ${p.average.toStringAsFixed(2)}",
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 14,
                             color: Colors.amberAccent,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 5),
                       Text(
                         "Letzte Aufnahmen:",
-                        style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                        style: TextStyle(fontSize: 10, color: Colors.grey[400]),
                       ),
                       Wrap(
                         spacing: 5,
@@ -475,7 +474,7 @@ class GameScreen extends StatelessWidget {
                             child: Text(
                               "$score",
                               style: const TextStyle(
-                                fontSize: 14,
+                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
@@ -483,12 +482,12 @@ class GameScreen extends StatelessWidget {
                           );
                         }).toList(),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 5),
                       Text(
                         "Sets: ${p.setsWon} | Legs: ${p.legsWon}",
                         style: const TextStyle(
                           color: Colors.grey,
-                          fontSize: 16,
+                          fontSize: 12,
                         ),
                       ),
                       if (isActive) ...[
@@ -526,7 +525,7 @@ class GameScreen extends StatelessWidget {
                   "Checkout: ${CheckoutService.getCheckoutHint(activePlayer.currentScore) ?? 'Kein gängiger Weg'}",
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -544,7 +543,7 @@ class GameScreen extends StatelessWidget {
                 // Linke Spalte: Große Modifier-Tasten
                 Container(
                   width: 160,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   child: Column(
                     children: [
                       _buildModifierBtn(
@@ -554,7 +553,7 @@ class GameScreen extends StatelessWidget {
                         state.currentModifier == 2,
                         Colors.orange,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       _buildModifierBtn(
                         context,
                         "TRIPLE",
@@ -562,7 +561,7 @@ class GameScreen extends StatelessWidget {
                         state.currentModifier == 3,
                         Colors.redAccent,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       _buildUndoBtn(context),
                     ],
                   ),
@@ -571,8 +570,8 @@ class GameScreen extends StatelessWidget {
                 // Rechte Seite: Das Zahlen-Grid
                 Expanded(
                   child: GridView.count(
-                    crossAxisCount: 7,
-                    padding: const EdgeInsets.all(12),
+                    crossAxisCount: 8,
+                    padding: const EdgeInsets.all(5),
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
                     children: [
@@ -643,7 +642,7 @@ class GameScreen extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: isActive ? activeColor : Colors.grey[800],
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(10),
             ),
             side: isActive
                 ? const BorderSide(color: Colors.white, width: 3)
@@ -669,7 +668,7 @@ class GameScreen extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: Colors.amber, width: 2),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(10),
             ),
             backgroundColor: Colors.amber.withOpacity(0.05),
           ),

@@ -47,9 +47,9 @@ class GameState extends ChangeNotifier {
   int currentModifier = 1; // 1 = Single, 2 = Double, 3 = Triple
 
   // State
-  List<Player> players = [Player(name: "Spieler 1"), Player(name: "Spieler 2")];
+  List<Player> players = [];
 
-  List<String> playerNames = ["Spieler 1", "Spieler 2"];
+  List<String> playerNames = ["Moritz"];
 
   void addPlayerName(String name) {
     if (name.isNotEmpty) {

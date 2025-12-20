@@ -376,16 +376,14 @@ class GameScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Zugriff auf den State
     var state = context.watch<GameState>();
     var activePlayer = state.activePlayer;
 
     return Scaffold(
       body: Column(
         children: [
-          // --- SCOREBOARD ---
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: state.players.asMap().entries.map((entry) {
@@ -394,113 +392,94 @@ class GameScreen extends StatelessWidget {
                 bool isActive = idx == state.currentPlayerIndex;
 
                 return Container(
-                  width:
-                      MediaQuery.of(context).size.width /
-                      (state.players.length + 0.5),
-                  margin: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 5,
-                  ),
-                  padding: const EdgeInsets.all(5),
+                  width: MediaQuery.of(context).size.width / (state.players.length + 0.5),
+                  margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: isActive ? Colors.blueGrey[700] : Colors.grey[900],
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(12),
                     border: isActive
-                        ? Border.all(color: Colors.amber, width: 3)
+                        ? Border.all(color: Colors.amber, width: 2) // Rand dünner
                         : Border.all(color: Colors.transparent),
                     boxShadow: isActive
-                        ? [
-                            BoxShadow(
-                              color: Colors.amber.withOpacity(0.3),
-                              blurRadius: 10,
-                            ),
-                          ]
+                        ? [BoxShadow(color: Colors.amber.withOpacity(0.3), blurRadius: 8)]
                         : [],
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        p.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      Text(
-                        "${p.currentScore}",
-                        style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      // --- AVERAGE ANZEIGE ---
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black26,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          "Ø: ${p.average.toStringAsFixed(2)}",
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.amberAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        "Letzte Aufnahmen:",
-                        style: TextStyle(fontSize: 10, color: Colors.grey[400]),
-                      ),
-                      Wrap(
-                        spacing: 5,
-                        children: p.turnHistory.reversed.take(5).map((score) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getScoreColor(score),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              "$score",
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        "Sets: ${p.setsWon} | Legs: ${p.legsWon}",
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
-                      if (isActive) ...[
-                        const SizedBox(height: 5),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         Text(
-                          "Darts: ${p.currentThrowHistory.join('  ')}",
+                          p.name,
+                          style: const TextStyle(fontSize: 18, color: Colors.white70),
+                        ),
+
+                        // Score
+                        Text(
+                          "${p.currentScore}",
                           style: const TextStyle(
-                            color: Colors.amber,
+                            fontSize: 45,
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 1.0,
                           ),
                         ),
+
+                        // Average Label
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          margin: const EdgeInsets.only(bottom: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            "Ø: ${p.average.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.amberAccent,
+                                fontWeight: FontWeight.bold
+                            ),
+                          ),
+                        ),
+
+                        // Historie
+                        Text("Letzte:", style: TextStyle(fontSize: 9, color: Colors.grey[400])),
+                        const SizedBox(height: 2),
+                        Wrap(
+                          spacing: 4,
+                          children: p.turnHistory.reversed.take(5).map((score) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: _getScoreColor(score),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: Text(
+                                "$score",
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+
+                        const SizedBox(height: 4),
+                        Text(
+                          "Sets: ${p.setsWon} | Legs: ${p.legsWon}",
+                          style: const TextStyle(color: Colors.grey, fontSize: 10),
+                        ),
+
+                        if (isActive)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              "Darts: ${p.currentThrowHistory.join('  ')}",
+                              style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ),
                       ],
-                    ],
+                    ),
                   ),
                 );
               }).toList(),
@@ -510,87 +489,54 @@ class GameScreen extends StatelessWidget {
           // --- CHECKOUT HINT ---
           if (activePlayer.currentScore <= 170)
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(15),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.green[900],
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  "Checkout: ${CheckoutService.getCheckoutHint(activePlayer.currentScore) ?? 'Kein gängiger Weg'}",
+                  "Checkout: ${CheckoutService.getCheckoutHint(activePlayer.currentScore) ?? '...'}",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ),
 
-          const Divider(color: Colors.grey, thickness: 1),
-
-          // --- INPUT PAD (Tablet optimiert) ---
+          const Divider(color: Colors.grey, height: 1),
+          // --- INPUT PAD ---
           Expanded(
-            flex: 3,
+            flex: 7,
             child: Row(
               children: [
-                // Linke Spalte: Große Modifier-Tasten
                 Container(
-                  width: 160,
-                  padding: const EdgeInsets.all(10),
+                  width: 140,
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     children: [
-                      _buildModifierBtn(
-                        context,
-                        "DOUBLE",
-                        2,
-                        state.currentModifier == 2,
-                        Colors.orange,
-                      ),
-                      const SizedBox(height: 10),
-                      _buildModifierBtn(
-                        context,
-                        "TRIPLE",
-                        3,
-                        state.currentModifier == 3,
-                        Colors.redAccent,
-                      ),
-                      const SizedBox(height: 10),
+                      _buildModifierBtn(context, "DOUBLE", 2, state.currentModifier == 2, Colors.orange),
+                      const SizedBox(height: 8),
+                      _buildModifierBtn(context, "TRIPLE", 3, state.currentModifier == 3, Colors.redAccent),
+                      const SizedBox(height: 8),
                       _buildUndoBtn(context),
                     ],
                   ),
                 ),
 
-                // Rechte Seite: Das Zahlen-Grid
+                // Rechte Seite (Zahlen)
                 Expanded(
                   child: GridView.count(
-                    crossAxisCount: 8,
-                    padding: const EdgeInsets.all(5),
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
+                    crossAxisCount: 7,
+                    padding: const EdgeInsets.all(8),
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 1.3,
                     children: [
-                      ...List.generate(
-                        20,
-                        (index) => _buildNumBtn(context, index + 1),
-                      ),
-                      _buildNumBtn(
-                        context,
-                        25,
-                        label: "BULL",
-                        color: Colors.green[700],
-                      ),
-                      _buildNumBtn(
-                        context,
-                        0,
-                        label: "0",
-                        color: Colors.blueGrey[800],
-                      ),
+                      ...List.generate(20, (index) => _buildNumBtn(context, index + 1)),
+                      _buildNumBtn(context, 25, label: "BULL", color: Colors.green[700]),
+                      _buildNumBtn(context, 0, label: "0", color: Colors.blueGrey[800]),
                     ],
                   ),
                 ),

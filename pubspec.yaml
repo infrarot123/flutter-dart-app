@@ -60,7 +60,13 @@ flutter:
   uses-material-design: true
 
   assets:
-     - assets/sounds/classis-andi.mp3
+     - assets/sounds/classic-andi.mp3
+     - assets/sounds/classic-eni.mp3
+     - assets/sounds/game-start.mp3
+     - assets/sounds/bust.mp3
+     - assets/sounds/leg-win-andere.mp3
+     - assets/sounds/leg-win-doppel.mp3
+     - assets/sounds/leg-win-moritz.mp3
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

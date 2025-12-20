@@ -237,7 +237,6 @@ class GameState extends ChangeNotifier {
   }
 
   void _handleLegWin() async {
-
     int timestamp = DateTime.now().millisecondsSinceEpoch;
     await Future.delayed(const Duration(milliseconds: 500));
     if (activePlayer.name == "Moritz") {
@@ -568,6 +567,7 @@ class GameScreen extends StatelessWidget {
                   width: 140,
                   padding: const EdgeInsets.all(8),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       _buildModifierBtn(
                         context,
@@ -659,7 +659,8 @@ class GameScreen extends StatelessWidget {
     bool isActive,
     Color activeColor,
   ) {
-    return Expanded(
+    return AspectRatio(
+      aspectRatio: 2.0,
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton(
@@ -672,12 +673,14 @@ class GameScreen extends StatelessWidget {
                 ? const BorderSide(color: Colors.white, width: 3)
                 : null,
             elevation: isActive ? 10 : 2,
+            padding:
+                EdgeInsets.zero,
           ),
           onPressed: () => context.read<GameState>().setModifier(val),
           child: Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -685,7 +688,8 @@ class GameScreen extends StatelessWidget {
   }
 
   Widget _buildUndoBtn(BuildContext context) {
-    return Expanded(
+    return AspectRatio(
+      aspectRatio: 2.0,
       child: SizedBox(
         width: double.infinity,
         child: OutlinedButton(
@@ -695,17 +699,19 @@ class GameScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             backgroundColor: Colors.amber.withOpacity(0.05),
+            padding: EdgeInsets.zero,
           ),
           onPressed: () => context.read<GameState>().undoLastThrow(),
           child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.undo, color: Colors.amber, size: 30),
+              Icon(Icons.undo, color: Colors.amber, size: 24),
               Text(
                 "UNDO",
                 style: TextStyle(
                   color: Colors.amber,
                   fontWeight: FontWeight.bold,
+                  fontSize: 12,
                 ),
               ),
             ],

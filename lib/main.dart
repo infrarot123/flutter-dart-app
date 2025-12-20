@@ -58,7 +58,7 @@ class CheckoutService {
 class GameState extends ChangeNotifier {
   // Settings
   final int startingScore = 501;
-  final int legsPerSet = 1;
+  final int legsPerSet = 3;
   final int maxSets = 1;
   int legStarterIndex = 0;
 

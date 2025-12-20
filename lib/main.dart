@@ -12,15 +12,16 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 class Player {
   final String name;
   int currentScore;
+  int startOfTurnScore = 0;
   int legsWon;
   int setsWon;
-  int totalPointsScored = 0;
-  int totalDartsThrown = 0;
+  int totalPointsScoredForAverage = 0;
+  int totalDartsForAverage = 0;
   List<int> currentThrowHistory;
 
   double get average {
-    if (totalDartsThrown == 0) return 0.0;
-    return (totalPointsScored / totalDartsThrown) * 3;
+    if (totalDartsForAverage == 0) return 0.0;
+    return (totalPointsScoredForAverage / totalDartsForAverage) * 3;
   }
 
   Player({required this.name, this.currentScore = 501, this.legsWon = 0, this.setsWon = 0})
@@ -40,8 +41,8 @@ class CheckoutService {
 class GameState extends ChangeNotifier {
   // Settings
   final int startingScore = 501;
-  final int legsPerSet = 3; // First to 3
-  final int maxSets = 3; // Best of 5 (eigentlich First to 3 sets)
+  final int legsPerSet = 3;
+  final int maxSets = 3;
 
   int currentPlayerIndex = 0;
   int currentModifier = 1; // 1 = Single, 2 = Double, 3 = Triple
@@ -67,6 +68,9 @@ class GameState extends ChangeNotifier {
 
   void startGame() {
     players = playerNames.map((name) => Player(name: name)).toList();
+    for (var p in players) {
+      p.startOfTurnScore = 501; // Initialwert
+    }
     currentPlayerIndex = 0;
     notifyListeners();
   }
@@ -76,81 +80,75 @@ class GameState extends ChangeNotifier {
 
   Player get activePlayer => players[currentPlayerIndex];
 
-  // Logic: Wurf verarbeiten
   void processThrow(int baseScore) async {
     int points = baseScore * currentModifier;
     Player p = activePlayer;
 
-    // Statistik tracken
-    p.totalDartsThrown++;
-    p.totalPointsScored += points;
-
-    // Validierung: Triple 25 gibt es nicht
-    if (baseScore == 0) {
-      activePlayer.currentThrowHistory.add(0);
-      // Sound für "Miss" hier abspielen?
-      _checkTurnEnd();
+    if (baseScore == 25 && currentModifier == 3) {
+      currentModifier = 1;
       notifyListeners();
       return;
     }
 
-    if (baseScore == 25 && currentModifier == 3) {
-      notifyListeners(); // UI Update um Modifier evtl zu resetten
-      return;
-    }
-    // Sound abspielen (Dummy-Pfad, muss im assets Ordner liegen)
-    // await _audioPlayer.play(AssetSource('sounds/hit.mp3'));
-
+    // Wurf zur History hinzufügen
     p.currentThrowHistory.add(points);
 
-    // Temporäres Abziehen für UI Feedback (optional, hier direkt Score Logik)
     int tempScore = p.currentScore - points;
 
-    // Logic Check
+    // --- BUST LOGIK ---
     if (tempScore < 0 || tempScore == 1) {
-      // BUST!
-      _handleBust();
-    } else if (tempScore == 0) {
-      // CHECKOUT MÖGLICHKEIT PRÜFEN (Double Out)
-      // War der letzte Wurf ein Double?
-      if (currentModifier == 2 || (baseScore == 50 && currentModifier == 1)) {
-        // 50 ist Bullseye (Double Bull)
+      _handleBust(); // Hier wird intern der Score resetet und _nextTurn gerufen
+      currentModifier = 1;
+      notifyListeners();
+      return; // Methode SOFORT beenden
+    }
+
+    // --- CHECKOUT LOGIK ---
+    else if (tempScore == 0) {
+      if (currentModifier == 2 || (baseScore == 25 && currentModifier == 2)) {
+        p.currentScore = 0;
+        _finalizeTurnStats(p, false);
         _handleLegWin();
+        return;
       } else {
-        _handleBust(); // 0 Rest aber kein Double getroffen
+        _handleBust();
+        currentModifier = 1;
+        notifyListeners();
+        return;
       }
-    } else {
-      // Normaler Wurf
+    }
+
+    // --- NORMALER WURF ---
+    else {
       p.currentScore = tempScore;
     }
 
+    // Sound Check (Andi)
     if (p.currentThrowHistory.length == 3) {
       int sumOfTurn = p.currentThrowHistory.reduce((a, b) => a + b);
-
       if (sumOfTurn == 26) {
-        if (sumOfTurn == 26) {
-          await Future.delayed(const Duration(milliseconds: 500));
-          await _safePlay(
-            'classis-andi.mp3',
-          ); // Nutze hier den exakten Namen aus deinem Log
-        }
+        await Future.delayed(const Duration(milliseconds: 500));
+        await _safePlay('classis-andi.mp3');
       }
     }
 
-    currentModifier = 1; // Modifier Reset nach Wurf
-
-    // Nächster Spieler wenn 3 Darts geworfen
-    if (p.currentThrowHistory.length == 3 && p.currentScore > 0) {
+    // Aufnahme beendet (3 Darts geworfen)
+    if (p.currentThrowHistory.length == 3) {
+      _finalizeTurnStats(p, false);
       _nextTurn();
     }
 
-    notifyListeners(); // Das "Observer Pattern": UI aktualisieren!
+    currentModifier = 1; // Reset Modifier nach jedem Wurf
+    notifyListeners();
   }
 
-  void _checkTurnEnd() {
-    if (activePlayer.currentThrowHistory.length == 3) {
-      _nextTurn();
-    }
+// Hilfsmethode für den sauberen Average
+  void _finalizeTurnStats(Player p, bool isBust) {
+    // Bei einem Bust zählen die Punkte der Aufnahme als 0
+    int pointsToAdd = isBust ? 0 : p.currentThrowHistory.reduce((a, b) => a + b);
+
+    p.totalPointsScoredForAverage += pointsToAdd;
+    p.totalDartsForAverage += p.currentThrowHistory.length;
   }
 
   void undoLastThrow() {
@@ -195,13 +193,11 @@ class GameState extends ChangeNotifier {
   }
 
   void _handleBust() {
-    // Score zurücksetzen auf Stand vor den 3 Darts
-    int pointsInTurn = activePlayer.currentThrowHistory.reduce((a, b) => a + b);
-    // Da wir oben schon abgezogen haben (in einer echten App würde man temp score nutzen)
-    // machen wir es hier simpel: Score Reset auf Stand vor Runde
-    // Hinweis: Für eine perfekte Undo-Logik bräuchte man eine "StartOfTurnScore" Variable.
-    // Hier vereinfacht:
-    // TODO: Bust Sound
+    Player p = activePlayer;
+    p.currentScore = p.startOfTurnScore;
+
+    _finalizeTurnStats(p, true);
+    //TODO bust sound
     _nextTurn();
   }
 
@@ -256,6 +252,8 @@ class GameState extends ChangeNotifier {
   void _nextTurn() {
     activePlayer.currentThrowHistory.clear();
     currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+
+    activePlayer.startOfTurnScore = activePlayer.currentScore;
   }
 }
 

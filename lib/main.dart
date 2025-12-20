@@ -12,24 +12,37 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 class Player {
   final String name;
   int currentScore;
-  int startOfTurnScore = 0;
+  int startOfTurnScore = 501;
   int legsWon;
   int setsWon;
+
   int totalPointsScoredForAverage = 0;
   int totalDartsForAverage = 0;
-  List<int> currentThrowHistory;
 
-  double get average {
-    if (totalDartsForAverage == 0) return 0.0;
-    return (totalPointsScoredForAverage / totalDartsForAverage) * 3;
-  }
+  List<int> currentThrowHistory = [];
+
+  List<int> turnHistory = [];
 
   Player({
     required this.name,
     this.currentScore = 501,
     this.legsWon = 0,
     this.setsWon = 0,
-  }) : currentThrowHistory = [];
+  });
+
+  double get average {
+    if (totalDartsForAverage == 0) return 0.0;
+    return (totalPointsScoredForAverage / totalDartsForAverage) * 3;
+  }
+
+  void resetLegStats(int startingScore) {
+    currentScore = startingScore;
+    startOfTurnScore = startingScore;
+    totalPointsScoredForAverage = 0;
+    totalDartsForAverage = 0;
+    currentThrowHistory.clear();
+    turnHistory.clear();
+  }
 }
 
 class CheckoutService {
@@ -52,7 +65,6 @@ class GameState extends ChangeNotifier {
   int currentPlayerIndex = 0;
   int currentModifier = 1; // 1 = Single, 2 = Double, 3 = Triple
 
-  // State
   List<Player> players = [];
 
   List<String> playerNames = ["Moritz"];
@@ -74,14 +86,13 @@ class GameState extends ChangeNotifier {
   void startGame() {
     players = playerNames.map((name) => Player(name: name)).toList();
     for (var p in players) {
-      p.startOfTurnScore = 501; // Initialwert
+      p.startOfTurnScore = 501;
     }
     currentPlayerIndex = 0;
     legStarterIndex = 0;
     notifyListeners();
   }
 
-  // Audio
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   Player get activePlayer => players[currentPlayerIndex];
@@ -96,17 +107,16 @@ class GameState extends ChangeNotifier {
       return;
     }
 
-    // Wurf zur History hinzufügen
     p.currentThrowHistory.add(points);
 
     int tempScore = p.currentScore - points;
 
     // --- BUST LOGIK ---
     if (tempScore < 0 || tempScore == 1) {
-      _handleBust(); // Hier wird intern der Score resetet und _nextTurn gerufen
+      _handleBust();
       currentModifier = 1;
       notifyListeners();
-      return; // Methode SOFORT beenden
+      return;
     }
     // --- CHECKOUT LOGIK ---
     else if (tempScore == 0) {
@@ -127,7 +137,6 @@ class GameState extends ChangeNotifier {
       p.currentScore = tempScore;
     }
 
-    // Sound Check (Andi)
     if (p.currentThrowHistory.length == 3) {
       int sumOfTurn = p.currentThrowHistory.reduce((a, b) => a + b);
       if (sumOfTurn == 26) {
@@ -143,43 +152,36 @@ class GameState extends ChangeNotifier {
       }
     }
 
-    // Aufnahme beendet (3 Darts geworfen)
     if (p.currentThrowHistory.length == 3) {
       _finalizeTurnStats(p, false);
       _nextTurn();
     }
 
-    currentModifier = 1; // Reset Modifier nach jedem Wurf
+    currentModifier = 1;
     notifyListeners();
   }
 
-  // Hilfsmethode für den sauberen Average
   void _finalizeTurnStats(Player p, bool isBust) {
-    // Bei einem Bust zählen die Punkte der Aufnahme als 0
     int pointsToAdd = isBust
         ? 0
         : p.currentThrowHistory.reduce((a, b) => a + b);
 
     p.totalPointsScoredForAverage += pointsToAdd;
     p.totalDartsForAverage += p.currentThrowHistory.length;
+
+    p.turnHistory.add(pointsToAdd);
   }
 
   void undoLastThrow() {
     Player p = activePlayer;
 
-    // Wenn in der aktuellen Aufnahme schon Darts geworfen wurden:
     if (p.currentThrowHistory.isNotEmpty) {
       int lastValue = p.currentThrowHistory.removeLast();
-      p.currentScore += lastValue; // Punkte zurückgeben
+      p.currentScore += lastValue;
     }
-    // Wenn die Aufnahme leer ist, zum vorherigen Spieler zurückwechseln
     else {
       currentPlayerIndex = (currentPlayerIndex - 1) % players.length;
-      // Falls der Index negativ wird (bei Spieler 0):
       if (currentPlayerIndex < 0) currentPlayerIndex = players.length - 1;
-
-      // Hier müsste man eigentlich noch die History des vorherigen Spielers laden
-      // Für den Anfang reicht das Zurücksetzen innerhalb einer Aufnahme.
     }
 
     notifyListeners();
@@ -187,18 +189,16 @@ class GameState extends ChangeNotifier {
 
   Future<void> _safePlay(String fileName) async {
     try {
-      // Vorher stoppen, falls noch ein Sound läuft (verhindert Überlagerungsfehler im Web)
       await _audioPlayer.stop();
       await _audioPlayer.play(AssetSource('sounds/$fileName'));
     } catch (e) {
       print("Audio Fehler bei $fileName: $e");
-      // Hier könnte man eine Fallback-Logik einbauen
     }
   }
 
   void setModifier(int mod) {
     if (currentModifier == mod) {
-      currentModifier = 1; // Toggle off
+      currentModifier = 1;
     } else {
       currentModifier = mod;
     }
@@ -210,7 +210,6 @@ class GameState extends ChangeNotifier {
     p.currentScore = p.startOfTurnScore;
 
     _finalizeTurnStats(p, true);
-    //TODO bust sound
     await Future.delayed(const Duration(milliseconds: 500));
     await _safePlay('bust.mp3');
 
@@ -220,10 +219,8 @@ class GameState extends ChangeNotifier {
   void _handleMatchWin() {
     if (navigatorKey.currentContext == null) return;
 
-    // Diese Methode im GameState aufrufen, wenn setsWon == maxSets
     showDialog(
       context: navigatorKey.currentContext!,
-      // Erfordert einen globalen NavigatorKey
       builder: (context) => AlertDialog(
         title: const Text("Match gewonnen!"),
         content: Text(
@@ -234,7 +231,7 @@ class GameState extends ChangeNotifier {
             onPressed: () {
               Navigator.of(
                 context,
-              ).popUntil((route) => route.isFirst); // Zurück zum Setup
+              ).popUntil((route) => route.isFirst);
             },
             child: const Text("Neues Spiel"),
           ),
@@ -245,33 +242,25 @@ class GameState extends ChangeNotifier {
 
   void _handleLegWin() {
     activePlayer.legsWon++;
+    currentModifier = 1;
 
     if (activePlayer.legsWon >= legsPerSet) {
-      // ... (deine Sets-Logik bleibt gleich)
       activePlayer.setsWon++;
       activePlayer.legsWon = 0;
-      for (var p in players) p.legsWon = 0;
-
+      for (var p in players) {
+        p.legsWon = 0;
+      }
       if (activePlayer.setsWon >= maxSets) {
         _handleMatchWin();
         return;
       }
     }
-
-    // 1. Scores für alle zurücksetzen
     for (var p in players) {
-      p.currentScore = startingScore;
-      p.currentThrowHistory.clear();
-      p.startOfTurnScore = startingScore;
+      p.resetLegStats(startingScore);
     }
 
-    // 2. ANWURF-WECHSEL LOGIK
-    // Wir wechseln den Starter des Legs (0 -> 1 oder 1 -> 0)
     legStarterIndex = (legStarterIndex + 1) % players.length;
-
-    // Der neue aktuelle Spieler ist der neue Leg-Starter
     currentPlayerIndex = legStarterIndex;
-
     notifyListeners();
   }
 
@@ -465,6 +454,34 @@ class GameScreen extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Letzte Aufnahmen:",
+                        style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                      ),
+                      Wrap(
+                        spacing: 5,
+                        children: p.turnHistory.reversed.take(5).map((score) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getScoreColor(score),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              "$score",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
                       const SizedBox(height: 10),
                       Text(
@@ -674,4 +691,11 @@ class GameScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+Color _getScoreColor(int score) {
+  if (score >= 100) return Colors.redAccent;
+  if (score >= 60) return Colors.orangeAccent;
+  if (score >= 40) return Colors.blueAccent;
+  return Colors.grey[700]!;
 }

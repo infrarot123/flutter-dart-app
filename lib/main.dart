@@ -83,7 +83,10 @@ class GameState extends ChangeNotifier {
     }
   }
 
-  void startGame() {
+  void startGame() async {
+    await Future.delayed(const Duration(milliseconds: 500));
+    await _safePlay('game-start.mp3');
+
     players = playerNames.map((name) => Player(name: name)).toList();
     for (var p in players) {
       p.startOfTurnScore = 501;
